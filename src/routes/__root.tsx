@@ -72,14 +72,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "OmniCheck AI — Autonomous Verification for Social Commerce" },
+      { name: "description", content: "OmniCheck AI eliminates 'What I Ordered vs. What I Got' fraud through agentic AI verification and Squad-powered escrow payments." },
+      { property: "og:title", content: "OmniCheck AI — Proof of Life for Vendors" },
+      { property: "og:description", content: "An AI-powered trust layer for Nigerian social commerce. Verify vendors before money moves." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:site", content: "@omnicheckai" },
     ],
     links: [
       {
