@@ -145,15 +145,24 @@ export default function Demo() {
               <div className="mt-3">Awaiting verification…</div>
             </div>
           ) : (
-            <ResultPanel result={result} />
+            <ResultPanel result={result} onPay={() => setPayOpen(true)} />
           )}
         </div>
       </div>
+
+      {result && (
+        <SquadPaymentModal
+          open={payOpen}
+          onClose={() => setPayOpen(false)}
+          vendor={result.vendor}
+          score={result.score}
+        />
+      )}
     </div>
   );
 }
 
-function ResultPanel({ result }: { result: Result }) {
+function ResultPanel({ result, onPay }: { result: Result; onPay: () => void }) {
   const cfg = result.tier === "verified"
     ? { color: "text-accent", border: "border-accent/40", bg: "bg-accent/10", label: "VERIFIED", action: "Squad Payment Link issued", Icon: CreditCard }
     : result.tier === "risk"
