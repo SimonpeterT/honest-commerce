@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Bot, CheckCircle2, ShieldCheck, Loader2, Vault, CreditCard } from "lucide-react";
+import { SquadPaymentModal } from "@/components/SquadPaymentModal";
 
 export const Route = createFileRoute("/demo")({
   head: () => ({
@@ -33,6 +34,14 @@ export default function Demo() {
   const [running, setRunning] = useState(false);
   const [active, setActive] = useState(-1);
   const [result, setResult] = useState<Result | null>(null);
+  const [payOpen, setPayOpen] = useState(false);
+
+  useEffect(() => {
+    if (result && result.score > 70) {
+      const t = setTimeout(() => setPayOpen(true), 600);
+      return () => clearTimeout(t);
+    }
+  }, [result]);
 
   const run = async () => {
     if (!url.trim() || running) return;
@@ -136,15 +145,24 @@ export default function Demo() {
               <div className="mt-3">Awaiting verification…</div>
             </div>
           ) : (
-            <ResultPanel result={result} />
+            <ResultPanel result={result} onPay={() => setPayOpen(true)} />
           )}
         </div>
       </div>
+
+      {result && (
+        <SquadPaymentModal
+          open={payOpen}
+          onClose={() => setPayOpen(false)}
+          vendor={result.vendor}
+          score={result.score}
+        />
+      )}
     </div>
   );
 }
 
-function ResultPanel({ result }: { result: Result }) {
+function ResultPanel({ result, onPay }: { result: Result; onPay: () => void }) {
   const cfg = result.tier === "verified"
     ? { color: "text-accent", border: "border-accent/40", bg: "bg-accent/10", label: "VERIFIED", action: "Squad Payment Link issued", Icon: CreditCard }
     : result.tier === "risk"
@@ -192,6 +210,15 @@ function ResultPanel({ result }: { result: Result }) {
         <Sub label="Review NLP" value={pct(result.score, 2)} />
         <Sub label="CV originality" value={pct(result.score, -7)} />
       </div>
+
+      {result.score > 70 && (
+        <button
+          onClick={onPay}
+          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-glow transition-transform hover:scale-[1.02]"
+        >
+          <CreditCard className="h-4 w-4" /> Pay vendor via Squad
+        </button>
+      )}
     </div>
   );
 }
