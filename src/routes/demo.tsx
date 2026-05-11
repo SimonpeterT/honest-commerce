@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Bot, CheckCircle2, ShieldCheck, Loader2, Vault, CreditCard } from "lucide-react";
+import { SquadPaymentModal } from "@/components/SquadPaymentModal";
 
 export const Route = createFileRoute("/demo")({
   head: () => ({
@@ -33,6 +34,14 @@ export default function Demo() {
   const [running, setRunning] = useState(false);
   const [active, setActive] = useState(-1);
   const [result, setResult] = useState<Result | null>(null);
+  const [payOpen, setPayOpen] = useState(false);
+
+  useEffect(() => {
+    if (result && result.score > 70) {
+      const t = setTimeout(() => setPayOpen(true), 600);
+      return () => clearTimeout(t);
+    }
+  }, [result]);
 
   const run = async () => {
     if (!url.trim() || running) return;
