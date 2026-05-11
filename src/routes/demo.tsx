@@ -210,6 +210,15 @@ function ResultPanel({ result, onPay }: { result: Result; onPay: () => void }) {
         <Sub label="Review NLP" value={pct(result.score, 2)} />
         <Sub label="CV originality" value={pct(result.score, -7)} />
       </div>
+
+      {result.score > 70 && (
+        <button
+          onClick={onPay}
+          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-glow transition-transform hover:scale-[1.02]"
+        >
+          <CreditCard className="h-4 w-4" /> Pay vendor via Squad
+        </button>
+      )}
     </div>
   );
 }
