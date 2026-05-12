@@ -61,14 +61,6 @@ export default function Demo() {
   const [running, setRunning] = useState(false);
   const [active, setActive] = useState(-1);
   const [result, setResult] = useState<Result | null>(null);
-  const [payOpen, setPayOpen] = useState(false);
-
-  useEffect(() => {
-    if (result && result.score > 70) {
-      const t = setTimeout(() => setPayOpen(true), 600);
-      return () => clearTimeout(t);
-    }
-  }, [result]);
 
   const run = async () => {
     if (!url.trim() || running) return;
@@ -79,7 +71,6 @@ export default function Demo() {
       setActive(i);
       await sleep(550 + Math.random() * 450);
     }
-    // deterministic-ish score from URL
     const score = scoreFromUrl(url);
     const tier: Result["tier"] = score >= 85 ? "verified" : score >= 60 ? "risk" : "blocked";
     setResult({ score, tier, vendor: vendorFromUrl(url) });
