@@ -163,19 +163,10 @@ export default function Demo() {
               <div className="mt-3">Awaiting verification…</div>
             </div>
           ) : (
-            <ResultPanel result={result} onPay={() => setPayOpen(true)} />
+            <ResultPanel result={result} />
           )}
         </div>
       </div>
-
-      {result && (
-        <SquadPaymentModal
-          open={payOpen}
-          onClose={() => setPayOpen(false)}
-          vendor={result.vendor}
-          score={result.score}
-        />
-      )}
     </div>
   );
 }
