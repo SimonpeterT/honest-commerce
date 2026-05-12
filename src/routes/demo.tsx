@@ -1,7 +1,34 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ArrowRight, Bot, CheckCircle2, ShieldCheck, Loader2, Vault, CreditCard } from "lucide-react";
-import { SquadPaymentModal } from "@/components/SquadPaymentModal";
+
+const SQUAD_PUBLIC_KEY = "pk_0b70ee93ca30c1b383fc001b223e0fdef412522b";
+const SQUAD_WIDGET_SRC = "https://checkout.squadco.com/widget/squad.min.js";
+
+declare global {
+  interface Window {
+    squad?: new (opts: Record<string, unknown>) => { setup: () => void; open: () => void };
+  }
+}
+
+function loadSquadScript(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === "undefined") return reject(new Error("no window"));
+    if (window.squad) return resolve();
+    const existing = document.querySelector<HTMLScriptElement>(`script[src="${SQUAD_WIDGET_SRC}"]`);
+    if (existing) {
+      existing.addEventListener("load", () => resolve());
+      existing.addEventListener("error", () => reject(new Error("Failed to load Squad widget")));
+      return;
+    }
+    const s = document.createElement("script");
+    s.src = SQUAD_WIDGET_SRC;
+    s.async = true;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("Failed to load Squad widget"));
+    document.body.appendChild(s);
+  });
+}
 
 export const Route = createFileRoute("/demo")({
   head: () => ({
@@ -34,14 +61,6 @@ export default function Demo() {
   const [running, setRunning] = useState(false);
   const [active, setActive] = useState(-1);
   const [result, setResult] = useState<Result | null>(null);
-  const [payOpen, setPayOpen] = useState(false);
-
-  useEffect(() => {
-    if (result && result.score > 70) {
-      const t = setTimeout(() => setPayOpen(true), 600);
-      return () => clearTimeout(t);
-    }
-  }, [result]);
 
   const run = async () => {
     if (!url.trim() || running) return;
@@ -52,7 +71,6 @@ export default function Demo() {
       setActive(i);
       await sleep(550 + Math.random() * 450);
     }
-    // deterministic-ish score from URL
     const score = scoreFromUrl(url);
     const tier: Result["tier"] = score >= 85 ? "verified" : score >= 60 ? "risk" : "blocked";
     setResult({ score, tier, vendor: vendorFromUrl(url) });
@@ -145,30 +163,57 @@ export default function Demo() {
               <div className="mt-3">Awaiting verification…</div>
             </div>
           ) : (
-            <ResultPanel result={result} onPay={() => setPayOpen(true)} />
+            <ResultPanel result={result} />
           )}
         </div>
       </div>
-
-      {result && (
-        <SquadPaymentModal
-          open={payOpen}
-          onClose={() => setPayOpen(false)}
-          vendor={result.vendor}
-          score={result.score}
-        />
-      )}
     </div>
   );
 }
 
-function ResultPanel({ result, onPay }: { result: Result; onPay: () => void }) {
+function ResultPanel({ result }: { result: Result }) {
   const cfg = result.tier === "verified"
     ? { color: "text-accent", border: "border-accent/40", bg: "bg-accent/10", label: "VERIFIED", action: "Squad Payment Link issued", Icon: CreditCard }
     : result.tier === "risk"
     ? { color: "text-warning", border: "border-warning/40", bg: "bg-warning/10", label: "HIGH-RISK", action: "Routed to Squad Virtual Account (escrow)", Icon: Vault }
     : { color: "text-danger", border: "border-danger/40", bg: "bg-danger/10", label: "BLOCKED", action: "Transaction halted · buyer protected", Icon: ShieldCheck };
   const C = cfg.Icon;
+
+  const [amount, setAmount] = useState("");
+  const [email, setEmail] = useState("");
+  const [payLoading, setPayLoading] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
+  const [paid, setPaid] = useState(false);
+
+  const onProceed = async () => {
+    setPayError(null);
+    const amt = Number(amount);
+    if (!amt || amt <= 0) return setPayError("Enter a valid amount in Naira");
+    if (!/^\S+@\S+\.\S+$/.test(email)) return setPayError("Enter a valid email");
+    setPayLoading(true);
+    try {
+      await loadSquadScript();
+      if (!window.squad) throw new Error("Squad widget unavailable");
+      const checkout = new window.squad({
+        onClose: () => setPayLoading(false),
+        onLoad: () => {},
+        onSuccess: () => {
+          setPaid(true);
+          setPayLoading(false);
+        },
+        key: SQUAD_PUBLIC_KEY,
+        email,
+        amount: Math.round(amt * 100), // kobo
+        currency_code: "NGN",
+      });
+      checkout.setup();
+      checkout.open();
+    } catch (e) {
+      setPayError(e instanceof Error ? e.message : "Could not open Squad checkout");
+      setPayLoading(false);
+    }
+  };
+
   return (
     <div className="mt-4">
       <div className="flex items-center justify-between">
@@ -211,13 +256,53 @@ function ResultPanel({ result, onPay }: { result: Result; onPay: () => void }) {
         <Sub label="CV originality" value={pct(result.score, -7)} />
       </div>
 
-      {result.score > 70 && (
-        <button
-          onClick={onPay}
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-glow transition-transform hover:scale-[1.02]"
-        >
-          <CreditCard className="h-4 w-4" /> Pay vendor via Squad
-        </button>
+      {result.score > 70 && !paid && (
+        <div className="mt-5 space-y-3 rounded-xl border border-accent/30 bg-accent/5 p-4">
+          <div className="text-xs font-mono uppercase tracking-widest text-accent">
+            Safe payment unlocked
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="text-xs text-muted-foreground">
+              Amount (₦)
+              <input
+                value={amount}
+                onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))}
+                placeholder="15000"
+                inputMode="decimal"
+                className="mt-1 w-full rounded-md border border-border bg-background/60 px-3 py-2 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
+              />
+            </label>
+            <label className="text-xs text-muted-foreground">
+              Customer email
+              <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                type="email"
+                className="mt-1 w-full rounded-md border border-border bg-background/60 px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
+              />
+            </label>
+          </div>
+          {payError && <div className="text-xs text-danger">{payError}</div>}
+          <button
+            onClick={onProceed}
+            disabled={payLoading}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-glow transition-transform hover:scale-[1.02] disabled:opacity-60 disabled:hover:scale-100"
+          >
+            {payLoading
+              ? <><Loader2 className="h-4 w-4 animate-spin" /> Opening Squad checkout…</>
+              : <><CreditCard className="h-4 w-4" /> Proceed to Safe Payment</>}
+          </button>
+        </div>
+      )}
+
+      {paid && (
+        <div className="mt-5 flex items-start gap-3 rounded-xl border border-accent/40 bg-accent/10 p-4">
+          <CheckCircle2 className="mt-0.5 h-5 w-5 text-accent" />
+          <div className="text-sm">
+            Payment completed safely through OmniCheck AI verification.
+          </div>
+        </div>
       )}
     </div>
   );
