@@ -1,7 +1,34 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ArrowRight, Bot, CheckCircle2, ShieldCheck, Loader2, Vault, CreditCard } from "lucide-react";
-import { SquadPaymentModal } from "@/components/SquadPaymentModal";
+
+const SQUAD_PUBLIC_KEY = "pk_0b70ee93ca30c1b383fc001b223e0fdef412522b";
+const SQUAD_WIDGET_SRC = "https://checkout.squadco.com/widget/squad.min.js";
+
+declare global {
+  interface Window {
+    squad?: new (opts: Record<string, unknown>) => { setup: () => void; open: () => void };
+  }
+}
+
+function loadSquadScript(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === "undefined") return reject(new Error("no window"));
+    if (window.squad) return resolve();
+    const existing = document.querySelector<HTMLScriptElement>(`script[src="${SQUAD_WIDGET_SRC}"]`);
+    if (existing) {
+      existing.addEventListener("load", () => resolve());
+      existing.addEventListener("error", () => reject(new Error("Failed to load Squad widget")));
+      return;
+    }
+    const s = document.createElement("script");
+    s.src = SQUAD_WIDGET_SRC;
+    s.async = true;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("Failed to load Squad widget"));
+    document.body.appendChild(s);
+  });
+}
 
 export const Route = createFileRoute("/demo")({
   head: () => ({
