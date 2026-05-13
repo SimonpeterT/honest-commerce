@@ -72,7 +72,7 @@ export default function Demo() {
       await sleep(550 + Math.random() * 450);
     }
     const score = scoreFromUrl(url);
-    const tier: Result["tier"] = score >= 85 ? "verified" : score >= 60 ? "risk" : "blocked";
+    const tier: Result["tier"] = score >= 80 ? "verified" : score >= 70 ? "risk" : "blocked";
     setResult({ score, tier, vendor: vendorFromUrl(url) });
     setRunning(false);
   };
