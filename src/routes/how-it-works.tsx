@@ -94,8 +94,9 @@ function HowItWorks() {
           title="Squad API Enforcement"
           body="The score directly controls how money moves. Verified vendors get instant checkout; risky ones are forced through escrow; impostors are blocked entirely."
           bullets={[
-            "Score > 85 → Squad Payment Gateway link generated",
-            "Score 60–84 → Squad Virtual Account opened for escrow-style hold",
+            "Score ≥ 80 → Squad Payment Gateway link generated (direct checkout)",
+            "Score 70–79 → Squad Virtual Account opened for escrow-style hold",
+            "Score < 70 → Blocked, no payment option offered",
             "Squad Resolve NUBAN confirms vendor bank name matches researched business name",
           ]}
         />
