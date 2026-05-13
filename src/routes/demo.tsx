@@ -256,10 +256,15 @@ function ResultPanel({ result }: { result: Result }) {
         <Sub label="CV originality" value={pct(result.score, -7)} />
       </div>
 
-      {result.score > 70 && !paid && (
-        <div className="mt-5 space-y-3 rounded-xl border border-accent/30 bg-accent/5 p-4">
-          <div className="text-xs font-mono uppercase tracking-widest text-accent">
-            Safe payment unlocked
+      {result.tier !== "blocked" && !paid && (
+        <div className={`mt-5 space-y-3 rounded-xl border ${cfg.border} ${cfg.bg} p-4`}>
+          <div className={`text-xs font-mono uppercase tracking-widest ${cfg.color}`}>
+            {result.tier === "verified" ? "Direct safe payment unlocked" : "Escrow payment via Squad Virtual Account"}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {result.tier === "verified"
+              ? "Vendor passed verification — funds release directly on payment."
+              : "Vendor is borderline — funds are held in a Squad Virtual Account until delivery is confirmed."}
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-xs text-muted-foreground">
@@ -291,8 +296,19 @@ function ResultPanel({ result }: { result: Result }) {
           >
             {payLoading
               ? <><Loader2 className="h-4 w-4 animate-spin" /> Opening Squad checkout…</>
-              : <><CreditCard className="h-4 w-4" /> Proceed to Safe Payment</>}
+              : result.tier === "verified"
+                ? <><CreditCard className="h-4 w-4" /> Proceed to Safe Payment</>
+                : <><Vault className="h-4 w-4" /> Pay into Squad Escrow</>}
           </button>
+        </div>
+      )}
+
+      {result.tier === "blocked" && !paid && (
+        <div className="mt-5 flex items-start gap-3 rounded-xl border border-danger/40 bg-danger/10 p-4">
+          <ShieldCheck className="mt-0.5 h-5 w-5 text-danger" />
+          <div className="text-sm">
+            Payment blocked. Trust score is below the safe threshold — OmniCheck AI will not route funds to this vendor.
+          </div>
         </div>
       )}
 
