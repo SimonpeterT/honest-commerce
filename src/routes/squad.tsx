@@ -36,14 +36,14 @@ function SquadPage() {
           icon={Vault}
           title="Squad Virtual Accounts"
           tag="Escrow innovation"
-          body="For high-risk vendors (score 60–84), funds land in a unique virtual account and are only released to the vendor once the buyer confirms receipt of goods."
+          body="For mid-trust vendors (score 70–79), funds land in a unique virtual account and are only released to the vendor once the buyer confirms receipt of goods."
           when="Triggered automatically when the OmniCheck Score falls into the high-risk band."
         />
         <SquadCard
           icon={CreditCard}
           title="Squad Payment Gateway"
           tag="Verified checkout"
-          body="For trusted vendors (score > 85), OmniCheck generates a direct Squad payment link for an instant, frictionless checkout — backed by full proof of life."
+          body="For trusted vendors (score ≥ 80), OmniCheck generates a direct Squad payment link for an instant, frictionless checkout — backed by full proof of life."
           when="Issued the moment the agent clears the verified threshold."
         />
       </div>
@@ -53,17 +53,17 @@ function SquadPage() {
         <h2 className="text-2xl font-bold">End-to-end financial flow</h2>
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           <FlowRow
-            band="VERIFIED · 85+"
+            band="VERIFIED · 80+"
             color="text-accent"
             steps={["Squad Resolve NUBAN ✓", "Squad Payment Gateway link", "Instant settlement to vendor"]}
           />
           <FlowRow
-            band="HIGH-RISK · 60–84"
+            band="MID-TRUST · 70–79"
             color="text-warning"
             steps={["Squad Resolve NUBAN ✓", "Squad Virtual Account opened", "Funds released on buyer confirmation"]}
           />
           <FlowRow
-            band="BLOCKED · <60"
+            band="BLOCKED · <70"
             color="text-danger"
             steps={["Squad APIs not invoked", "Buyer shown trust report", "Money never leaves the buyer"]}
           />
